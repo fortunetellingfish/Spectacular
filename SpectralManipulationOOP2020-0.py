@@ -376,7 +376,7 @@ class MakeSpectrumPage(AppPage):
     def makeSpectrum(self):
         #make a Spectrum object
         try:
-            self.controller.make_spectrum(self.nameVar.get(), self.controller.get_dfs()[self.filename.get()], self.xVar.get(), self.yVar.get())
+            self.controller.make_spectrum(self.nameVar.get(), self.controller.get_dfs()[self.filenameVar.get()], self.xVar.get(), self.yVar.get())
             self.alertBox.config(text="Spectrum added to list.")
 
         except KeyError:
@@ -574,7 +574,6 @@ class Spectrum: #Objects of this class are two-column structures.
 class ConditionalPopup(tk.Toplevel):
     #parent class of OK/Cancel popups where OK is disabled until all fields are filled
     def __init__(self, master, title, **kwargs):#@param **kwargs the Variables traced by the widgets in the popup
-
         if all(isinstance(kwarg, tk.Variable) for kwarg in kwargs.values()):
             super().__init__(master)
             self.__dict__.update(kwargs)
@@ -586,12 +585,13 @@ class ConditionalPopup(tk.Toplevel):
             self.widgetFrame = tk.Frame(self)
             self.widgetFrame.grid(row=0, column=0)
 
-            self.traceVars()
             self.makeWidgets()
+            self.traceVars()
             
         else: raise TypeError
        
     def traceVars(self):
+        #attach the activateOK method to the textvariables of the popup
         for var in self.vars.values():
             var.trace('w', self.activateOK)
 
@@ -622,24 +622,24 @@ class GraphPopup(ConditionalPopup):
 #===========================================================================================================================================================================================================================
 class LoadDelimitedFilePopup(ConditionalPopup):
     def __init__(self, master):
-        super().__init__(master, "Load Delimited File", filenameVar=tk.StringVar(),
-                                                           delimiterVar=tk.StringVar())
-        self.makeAlertBox()
-
         self.delimiters={'comma':',',
                          'tab':'\t',
                          'space':' ',
                          'newline':'\n'} #map delimiter names to their str representations
-    
+
+        super().__init__(master, "Load Delimited File", filenameVar=tk.StringVar(),
+                                                           delimiterVar=tk.StringVar())
+        
     def makeWidgets(self):
         fileChooserButton = ttk.Button(self.widgetFrame, text="Choose File", command=self.getfilename)
         fileChooserButton.grid(row=0, column=0, padx=10, pady=10, sticky='nsew')
 
-        delimiterCombobox = ttk.Combobox(self.widgetFrame, values=self.delimiters, textvariable=self.delimiterVar)
+        delimiterCombobox = ttk.Combobox(self.widgetFrame, values=list(self.delimiters.keys()), textvariable=self.delimiterVar)
         delimiterCombobox.set("Select a delimiter")
         delimiterCombobox.configure(state='readonly')
         delimiterCombobox.grid(row=1, column=0, padx=10, pady=10, sticky='nsew')
 
+        self.makeAlertBox()
         super().makeWidgets()
 
     def getfilename(self):
@@ -647,14 +647,13 @@ class LoadDelimitedFilePopup(ConditionalPopup):
 
     def okPressed(self, *args):
         try:
-            self.master.controller.load(self.filenamVar.get(), 'csv', delimiter=self.delimiters[self.delimiterVar.get()])
+            self.master.controller.load(self.filenameVar.get(), 'csv', delimiter=self.delimiters[self.delimiterVar.get()])
             super().okPressed()
             
         except UnsupportedFileTypeException as inst:
             self.alertBox.configure(text=inst.message)
-
-        finally:
             self.after(3000, lambda:self.alertBox.configure(text=""))
+
 #===========================================================================================================================================================================================================================
 class DuplicateSpectrumPopup(ConditionalPopup):
     def __init__(self, master):
@@ -895,28 +894,28 @@ class ArithmeticPopup(ConditionalPopup):
         self.opVar.trace('w', self.activateAuxiliaryField)
 
     def makeWidgets(self):
-        nameLabel = tk.Label(self.widgetFrame, text="Name the result spectrum:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
+        nameLabel = tk.Label(self.widgetFrame, text="Name the result spectrum:")
         nameLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
         
-        nameEntry = ttk.Entry(frame, textvariable=self.nameVar).grid(row=0, column=1, padx=10, pady=10, sticky='w')
+        nameEntry = ttk.Entry(frame, textvariable=self.nameVar)
         nameEntry.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
-        s1Label = tk.Label(self.widgetFrame, text="Spectrum 1:").grid(row=2, column=0, padx=10, pady=10, sticky='e')
+        s1Label = tk.Label(self.widgetFrame, text="Spectrum 1:")
         s1Label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
         
-        s1Combobox = ttk.Combobox(frame, values=list(self.master.controller.get_spectra().keys()), state='readonly', textvariable=self.s1Var).grid(row=2, column=1, padx=10, pady=10, sticky='w')
+        s1Combobox = ttk.Combobox(frame, values=list(self.master.controller.get_spectra().keys()), state='readonly', textvariable=self.s1Var)
         s1Combobox.grid(row=1, column=1, padx=10, pady=10,sticky='w')
 
-        opLabel = tk.Label(self.widgetFrame, text="Operation:").grid(row=1, column=0, padx=10, pady=10, sticky='e')
+        opLabel = tk.Label(self.widgetFrame, text="Operation:")
         opLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
 
-        opCombobox = ttk.Combobox(frame, values=list(member[0] for member in inspect.getmembers(self.functionClass) if not member[0].startswith('__')), state='readonly', textvariable=self.opVar).grid(row=1, column=1, padx=10, pady=10, sticky='w')
+        opCombobox = ttk.Combobox(frame, values=list(member[0] for member in inspect.getmembers(self.functionClass) if not member[0].startswith('__')), state='readonly', textvariable=self.opVar)
         opCombobox.grid(row=2, column=1, padx=10, pady=10, sticky='w')
 
-        s2Label = tk.Label(self.widgetFrame, text="Spectrum 2:").grid(row=3, column=0, padx=10, pady=10, sticky='e')
+        s2Label = tk.Label(self.widgetFrame, text="Spectrum 2:")
         s2Label.grid(row=3, column=0, padx=10, pady=10, sticky='e')
 
-        self.s2Combobox = ttk.Combobox(self.widgetFrame, values=list(self.master.controller.get_spectra().keys()), state='disabled').grid(row=3, column=1, padx=10, pady=10, sticky='w')
+        self.s2Combobox = ttk.Combobox(self.widgetFrame, values=list(self.master.controller.get_spectra().keys()), state='disabled')
         self.s2Combobox.grid(row=3, column=1, padx=10, pady=10, sticky='w')
 
         self.makeAlertBox()
@@ -967,7 +966,7 @@ class GrindingCurvePopup(ConditionalPopup):
         listboxFrame = tk.Frame(self.widgetFrame)
         listboxFrame.grid(row=2, column=1, padx=10, pady=10, sticky='w')
 
-        yscrollbar = ttk.Scrollbar(self.listboxFrame)
+        yscrollbar = ttk.Scrollbar(listboxFrame)
         yscrollbar.grid(row=0, column=1, sticky='ns')
         
         self.spectraListbox = tk.Listbox(listboxFrame, selectmode='multiple', yscrollcommand=yscrollbar.set)
@@ -975,7 +974,7 @@ class GrindingCurvePopup(ConditionalPopup):
         self.fillListbox()
         self.spectraListbox.bind('<<ListboxSelect>>', self.activateOK)
         
-        super().makeWidgets(frame)
+        super().makeWidgets()
 
     def fillListbox(self):
         #populate the listbox with the spectra names
@@ -1006,7 +1005,7 @@ class ZeroSpectrumPopup(ConditionalPopup):
     def makeWidgets(self):
         spectraLabel = tk.Label(self.widgetFrame, text="Spectrum:")
         spectraLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        self.spectraCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_spectra().keys()), textvariable=self.spectrumVar)
+        spectraCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_spectra().keys()), textvariable=self.spectrumVar)
         spectraCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
         nameLabel = tk.Label(self.widgetFrame, text="Name the result spectrum:")
@@ -1014,16 +1013,16 @@ class ZeroSpectrumPopup(ConditionalPopup):
         nameEntry = ttk.Entry(self.widgetFrame, textvariable=self.newNameVar)
         nameEntry.grid(row=1, column=1, padx=10, pady=10, sticky='w')
 
-        indicesLabel = tk.Label(self,widgetFrame, text="Indices:")
+        indicesLabel = tk.Label(self.widgetFrame, text="Indices:")
         indicesLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
         
         indicesFrame = tk.Frame(self.widgetFrame)
         indicesFrame.grid(row=2, column=1, pady=10, sticky='w')
 
-        self.leftIndexEntry = ttk.Entry(self.indicesFrame, textvariable=self.leftIndexVar)
+        leftIndexEntry = ttk.Entry(indicesFrame, textvariable=self.leftIndexVar)
         leftIndexEntry.grid(row=0, column=0, padx=5, sticky='e')
         
-        self.rightIndexEntry = ttk.Entry(self.indicesFrame, textvariable=self.rightIndexVar)
+        rightIndexEntry = ttk.Entry(indicesFrame, textvariable=self.rightIndexVar)
         rightIndexEntry.grid(row=0, column=1, padx=5, sticky='w')
         
         super().makeWidgets()
@@ -1150,7 +1149,7 @@ class ModifyPlotPopup(GraphPopup):
         lxlimEntry = ttk.Entry(limitsContainer, textvariable=self.lxlimVar)
         lxlimEntry.grid(row=1, column=0, padx=5, sticky='e')
         
-        rxlimEntry = ttk.Entry(self.limitsContainer, textvariable=self.rxlimVar)
+        rxlimEntry = ttk.Entry(limitsContainer, textvariable=self.rxlimVar)
         rxlimEntry.grid(row=1, column=1, padx=5, sticky='w')
 
         ylimLabel = tk.Label(limitsContainer, text="y Limits")
@@ -1215,6 +1214,7 @@ class BadAxisSymmetryException(Exception):
 '''--------------------------------------------------------------------------------------------------------------------------------------------'''
 def main():
     App().mainloop()
+    
     
 main()
 '''--------------------------------------------------------------------------------------------------------------------------------------------'''
