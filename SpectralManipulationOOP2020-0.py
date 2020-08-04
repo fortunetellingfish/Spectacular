@@ -790,11 +790,11 @@ class DeleteTracePopup(GraphPopup):
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
         #trace label and combobox
-        traceLabel = tk.Label(frame, text="Trace:")
+        traceLabel = tk.Label(self.widgetFrame, text="Trace:")
         traceLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
-        self.traceCombobox = ttk.Combobox(frame, state='disabled', textvariable=self.traceVar)
+        self.traceCombobox = ttk.Combobox(self.widgetFrame, state='disabled', textvariable=self.traceVar)
         self.traceCombobox.grid(row=2, column=1, padx=10, pady=10, sticky='w')
-        super().makeWidgets(frame)
+        super().makeWidgets()
 
     def activateTraceField(self, *args):
         if self.plotNameVar.get():
@@ -836,31 +836,31 @@ class ModifyTracePopup(GraphPopup):
 
     def makeWidgets(self):
         #plot label and combobox
-        plotLabel = tk.Label(frame, text="Plot:")
+        plotLabel = tk.Label(self.widgetFrame, text="Plot:")
         plotLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        plotCombobox = ttk.Combobox(frame, state='readonly', values=list(self.master.controller.get_plots().keys()), textvariable=self.plotNameVar)
+        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_plots().keys()), textvariable=self.plotNameVar)
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
        
         #trace label and combobox
-        traceLabel = tk.Label(frame, text="Trace:")
+        traceLabel = tk.Label(self.widgetFrame, text="Trace:")
         traceLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
-        self.traceCombobox = ttk.Combobox(frame, state='disabled', textvariable=self.traceVar)
+        self.traceCombobox = ttk.Combobox(self.widgetFrame, state='disabled', textvariable=self.traceVar)
         self.traceCombobox.grid(row=2, column=1, padx=10, pady=10, sticky='w')
 
         #colour label and combobox
-        colourLabel = tk.Label(frame, text="Colour:")
+        colourLabel = tk.Label(self.widgetFrame, text="Colour:")
         colourLabel.grid(row=3, column=0, padx=10, pady=10, sticky='e')
-        colourCombobox = ttk.Combobox(frame, state='readonly', values=list(mcolors.CSS4_COLORS), textvariable=self.colorVar)
+        colourCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(mcolors.CSS4_COLORS), textvariable=self.colorVar)
         colourCombobox.grid(row=3, column=1, padx=10, pady=10, sticky='w')
 
         #linewidth label and entry
-        linewidthLabel = tk.Label(frame, text="Line width:")
+        linewidthLabel = tk.Label(self.widgetFrame, text="Line width:")
         linewidthLabel.grid(row=4, column=0, padx=10, pady=10, sticky='e')
-        linewidthEntry = ttk.Entry(frame, textvariable=self.linewidthVar)
+        linewidthEntry = ttk.Entry(self.widgetFrame, textvariable=self.linewidthVar)
         linewidthEntry.grid(row=4, column=1, padx=10, pady=10, sticky='w')
 
         self.makeAlertBox()
-        super().makeWidgets(frame)
+        super().makeWidgets()
 
     def activateOK(self, *args):
         self.okButton.configure(state='disabled')
@@ -894,21 +894,33 @@ class ArithmeticPopup(ConditionalPopup):
         super().traceVars()
         self.opVar.trace('w', self.activateAuxiliaryField)
 
-    def makeWidgets(self, frame):
-        self.nameLabel = tk.Label(frame, text="Name the result spectrum:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        self.nameEntry = ttk.Entry(frame, textvariable=self.nameVar).grid(row=0, column=1, padx=10, pady=10, sticky='w')
+    def makeWidgets(self):
+        nameLabel = tk.Label(self.widgetFrame, text="Name the result spectrum:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
+        nameLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
+        
+        nameEntry = ttk.Entry(frame, textvariable=self.nameVar).grid(row=0, column=1, padx=10, pady=10, sticky='w')
+        nameEntry.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
-        self.s1Label = tk.Label(frame, text="Spectrum 1:").grid(row=2, column=0, padx=10, pady=10, sticky='e')
-        self.s1Combobox = ttk.Combobox(frame, values=list(self.master.controller.get_spectra().keys()), state='readonly', textvariable=self.s1Var).grid(row=2, column=1, padx=10, pady=10, sticky='w')
+        s1Label = tk.Label(self.widgetFrame, text="Spectrum 1:").grid(row=2, column=0, padx=10, pady=10, sticky='e')
+        s1Label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
+        
+        s1Combobox = ttk.Combobox(frame, values=list(self.master.controller.get_spectra().keys()), state='readonly', textvariable=self.s1Var).grid(row=2, column=1, padx=10, pady=10, sticky='w')
+        s1Combobox.grid(row=1, column=1, padx=10, pady=10,sticky='w')
 
-        self.opLabel = tk.Label(frame, text="Operation:").grid(row=1, column=0, padx=10, pady=10, sticky='e')
-        self.opCombobox = ttk.Combobox(frame, values=list(member[0] for member in inspect.getmembers(self.functionClass) if not member[0].startswith('__')), state='readonly', textvariable=self.opVar).grid(row=1, column=1, padx=10, pady=10, sticky='w')
+        opLabel = tk.Label(self.widgetFrame, text="Operation:").grid(row=1, column=0, padx=10, pady=10, sticky='e')
+        opLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
 
-        self.s2Label = tk.Label(frame, text="Spectrum 2:").grid(row=3, column=0, padx=10, pady=10, sticky='e')
-        self.s2Combobox = ttk.Combobox(frame, values=list(self.master.controller.get_spectra().keys()), state='disabled').grid(row=3, column=1, padx=10, pady=10, sticky='w')
+        opCombobox = ttk.Combobox(frame, values=list(member[0] for member in inspect.getmembers(self.functionClass) if not member[0].startswith('__')), state='readonly', textvariable=self.opVar).grid(row=1, column=1, padx=10, pady=10, sticky='w')
+        opCombobox.grid(row=2, column=1, padx=10, pady=10, sticky='w')
+
+        s2Label = tk.Label(self.widgetFrame, text="Spectrum 2:").grid(row=3, column=0, padx=10, pady=10, sticky='e')
+        s2Label.grid(row=3, column=0, padx=10, pady=10, sticky='e')
+
+        self.s2Combobox = ttk.Combobox(self.widgetFrame, values=list(self.master.controller.get_spectra().keys()), state='disabled').grid(row=3, column=1, padx=10, pady=10, sticky='w')
+        self.s2Combobox.grid(row=3, column=1, padx=10, pady=10, sticky='w')
 
         self.makeAlertBox()
-        super().makeWidgets(frame)
+        super().makeWidgets()
 
     def activateAuxiliaryField(self, *args):
         self.s2Combobox.configure(state='disabled')
@@ -1097,6 +1109,10 @@ class ModifyPlotPopup(GraphPopup):
                                                  titleVar=tk.StringVar(),
                                                  xVar=tk.StringVar(),
                                                  yVar=tk.StringVar(),
+                                                 lxlimVar=tk.StringVar(),
+                                                 rxlimVar=tk.StringVar(),
+                                                 lylimVar=tk.StringVar(),
+                                                 rylimVar=tk.StringVar(),
                                                  legendVar=tk.BooleanVar())
 
     def makeWidgets(self):
@@ -1128,18 +1144,22 @@ class ModifyPlotPopup(GraphPopup):
         limitsContainer = tk.Frame(self.widgetFrame)
         limitsContainer.grid(row=5, column=0, columnspan=2, padx=10)
 
-        xlimLabel = tk.Label(self.limitsContainer, text="x Limits")
+        xlimLabel = tk.Label(limitsContainer, text="x Limits")
         xlimLabel.grid(row=0, column=0, pady=5, sticky='w')
-        lxlimEntry = ttk.Entry(self.limitsContainer)
+        
+        lxlimEntry = ttk.Entry(limitsContainer, textvariable=self.lxlimVar)
         lxlimEntry.grid(row=1, column=0, padx=5, sticky='e')
-        rxlimEntry = ttk.Entry(self.limitsContainer)
+        
+        rxlimEntry = ttk.Entry(self.limitsContainer, textvariable=self.rxlimVar)
         rxlimEntry.grid(row=1, column=1, padx=5, sticky='w')
 
-        ylimLabel = tk.Label(self.limitsContainer, text="y Limits")
+        ylimLabel = tk.Label(limitsContainer, text="y Limits")
         ylimLabel.grid(row=0, column=2, pady=5, sticky='w')
-        self.lylimEntry = ttk.Entry(self.limitsContainer)
+        
+        lylimEntry = ttk.Entry(limitsContainer, textvariable=self.lylimVar)
         lylimEntry.grid(row=1, column=2, padx=5, sticky='e')
-        self.rylimEntry = ttk.Entry(self.limitsContainer)
+
+        rylimEntry = ttk.Entry(limitsContainer, textvariable=self.rylimVar)
         rylimEntry.grid(row=1, column=3, padx=5, sticky='w')
         
         super().makeWidgets()
@@ -1194,8 +1214,7 @@ class BadAxisSymmetryException(Exception):
 #==============================================================================================================================================      
 '''--------------------------------------------------------------------------------------------------------------------------------------------'''
 def main():
-    app = App()
-    app.mainloop()
+    App().mainloop()
     
 main()
 '''--------------------------------------------------------------------------------------------------------------------------------------------'''
