@@ -134,7 +134,6 @@ class App(tk.Tk): ###The controller of all pages, & control of operations
         #operate on operands only if their x axes are identical
         if all(isinstance(arg, Spectrum) for arg in args):
             if all(arg.xdata.equals(args[0].xdata) for arg in args):
-                print(args)
                 df = getattr(Class, operationName)(*args, **kwargs)
                 return self.make_spectrum(name, df, df.columns[0], df.columns[1])
             else: raise BadAxisSymmetryException
@@ -267,9 +266,13 @@ class HomePage(AppPage): #### The homepage of the application
     def loadDelimited(self):
         try:
             LoadDelimitedFilePopup(self)
+            self.alertBox.configure(text="File loaded successfully")
         
         except NoPathNameException as inst:
             self.alertBox.configure(text=inst.message)
+
+        finally:
+            self.after(5000, lambda:self.alertBox.configure(text=""))
 
 #=================================================================================================================================================
 class MakeSpectrumPage(AppPage):
@@ -637,19 +640,20 @@ class LoadDelimitedFilePopup(ConditionalPopup):
         delimiterCombobox = ttk.Combobox(self.widgetFrame, values=list(self.delimiters.keys()), textvariable=self.delimiterVar)
         delimiterCombobox.set("Select a delimiter")
         delimiterCombobox.configure(state='readonly')
-        delimiterCombobox.grid(row=1, column=0, padx=10, pady=10, sticky='nsew')
+        delimiterCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='nsew')
 
         self.makeAlertBox()
         super().makeWidgets()
 
     def getfilename(self):
         self.filenameVar.set(askopenfilename())
+        self.alertBox.configure(text=self.filenameVar.get())
 
     def okPressed(self, *args):
         try:
             self.master.controller.load(self.filenameVar.get(), 'csv', delimiter=self.delimiters[self.delimiterVar.get()])
             super().okPressed()
-            
+
         except UnsupportedFileTypeException as inst:
             self.alertBox.configure(text=inst.message)
             self.after(3000, lambda:self.alertBox.configure(text=""))
@@ -909,7 +913,7 @@ class ArithmeticPopup(ConditionalPopup):
         opLabel = tk.Label(self.widgetFrame, text="Operation:")
         opLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
 
-        opCombobox = ttk.Combobox(frame, values=list(member[0] for member in inspect.getmembers(self.functionClass) if not member[0].startswith('__')), state='readonly', textvariable=self.opVar)
+        opCombobox = ttk.Combobox(self.widgetFrame, values=list(member[0] for member in inspect.getmembers(self.functionClass) if not member[0].startswith('__')), state='readonly', textvariable=self.opVar)
         opCombobox.grid(row=2, column=1, padx=10, pady=10, sticky='w')
 
         s2Label = tk.Label(self.widgetFrame, text="Spectrum 2:")
@@ -935,6 +939,7 @@ class ArithmeticPopup(ConditionalPopup):
 
             else:
                 result = self.master.controller.operation(self.functionClass, self.opVar.get(), self.nameVar.get(), self.master.controller.get_spectra()[self.s1Var.get()])
+
             super().okPressed()
 
         except BadAxisSymmetryException as inst:
@@ -974,6 +979,7 @@ class GrindingCurvePopup(ConditionalPopup):
         self.fillListbox()
         self.spectraListbox.bind('<<ListboxSelect>>', self.activateOK)
         
+        self.makeAlertBox()
         super().makeWidgets()
 
     def fillListbox(self):
@@ -988,11 +994,14 @@ class GrindingCurvePopup(ConditionalPopup):
            super().activateOK() 
         
     def okPressed(self, *args):
-        for mineral in Minerals:
-            if mineral.name == self.mineralVar.get():
-                self.master.controller.operation(ParameterisedOperations, 'grinding_curve', self.nameVar.get(), mineral=mineral, *self.spectra)
-                break
-        super().okPressed()
+        try:
+            for mineral in Minerals:
+                if mineral.name == self.mineralVar.get():
+                    self.master.controller.operation(ParameterisedOperations, 'grinding_curve', self.nameVar.get(), mineral=mineral, *self.spectra)
+                    break
+            super().okPressed()
+        except BadAxisSymmetryException as inst:
+            self.alertBox.configure(text=inst.message)
 
 #================================================================================================================================================================
 class ZeroSpectrumPopup(ConditionalPopup):
@@ -1179,10 +1188,10 @@ class ModifyPlotPopup(GraphPopup):
         if not self.legendVar.get():
             self.master.controller.get_plots()[self.plotVar.get()].axes[0].legend().remove()
 
-        if all(entry.get().isnumeric() for entry in {self.lxlimEntry, self.rxlimEntry}):
+        if all(var.get().isnumeric() for var in {self.lxlimVar, self.rxlimVar}):
             self.master.controller.get_plots()[self.plotVar.get()].axes[0].set_xlim(float(self.lxlimEntry.get()), float(self.rxlimEntry.get()))
 
-        if all(entry.get().isnumeric() for entry in {self.lylimEntry, self.rylimEntry}):
+        if all(var.get().isnumeric() for var in {self.lylimVar, self.rylimVar}):
             self.master.controller.get_plots()[self.plotVar.get()].axes[0].set_ylim(float(self.lylimEntry.get()), float(self.rylimEntry.get()))
 
         if self.titleVar.get():
