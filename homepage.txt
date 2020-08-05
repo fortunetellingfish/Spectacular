@@ -1,0 +1,11 @@
+** Widgets **
+    * "Load delimited file" Button: *
+        This button raises a popup that allows the user to load data into the app from a local delimited file.
+    
+    * "Create Spectrum from File" Button: *
+        This button navigates to the Make Spectrum Page.
+
+** Popups **
+    * "Load Delimited File" popup: *
+        This popup has a "Choose File" button, which opens a file chooser. Once a file is chosen, the path will be displayed on the popup. The user must specify the delimiting character of the file from the drop down list.
+        Currently, comma, tab, space, and newline delimiting characters are supported.

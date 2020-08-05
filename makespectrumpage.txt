@@ -1,0 +1,9 @@
+** Widgets **
+    - * Name Entry: * Text entry widget for entering the name you wish to use for the `Spectrum` object.
+    - * File Selector: * Drop-down list for choosing the source file for the data of the `Spectrum` object.
+    - * x Column Selector: * Drop-down list for choosing the column of the source file that will become the independent axis of the `Spectrum` object.
+    - * y Column Selector: * Drop-down list for choosing the column of the source file that will become the dependent axis of the `Spectrum` object.
+    - * "Create Spectrum" Button: * This button will instantiate a `Spectrum` object and add it to the `App`'s `spectra` dictionary if all the fields are filled out. If the process succeeds, the alert box will read "Spectrum added to list."
+    - * Preview text box: * When a source is selected from the file selector, the data will be displayed in the Preview box on the right hand side of the page.
+
+All data must be represented as a `Spectrum` object before it can be manipulated, so this page should generally be the first you visit after you load a file.

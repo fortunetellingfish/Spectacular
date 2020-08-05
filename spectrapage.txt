@@ -1,0 +1,6 @@
+** Widgets **
+    - * Spectra drop-down list: * A selectable drop-down widget, whose values are all the Spectrum objects currently stored in the App instance.
+    - * File drop-down list: * A selectable drop-down widget of all the files loaded into the App instance.
+    - * Table viewer: * A scrollable textbox widget, blank initially, that, when an item is selected from either drop-down list, will configure itself to contain the data of the item, formatted "nicely" (fixed width).
+    - * Table viewer label: * A label which will contain the name of the item when selected from one of the drop-down lists.
+    
