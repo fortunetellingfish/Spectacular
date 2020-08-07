@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<h1> Welcome to Spectacular </h1>
+    <p>
+        This is a desktop app developed for viewing and manipulating FTIR spectra, although it could feasibly be used to view and manipulate some 
+        other types of data, as well.
+    </p>
+    <p>
+        The application is comprised of a backend <code>App</code> class, some operations classes, 
+        <code>AppPage</code> child classes which comprise the pages of the GUI, and popup classes for toplevel operation parameterisation and execution.
+    </p>
+
+<h2> Using this Tutorial </h2>
+    <p>
+        This tutorial will outline usage of the GUI app, with little discussion of the backend and source code. For more information on these, 
+        check out the README, or the source code on <a href="http://github.com/fortunetellingfish/Spectacular" target="_blank">github</a>.
+    </p>
+    <p>
+        The tutorial page can be accessed from the navigation tray of any app page. The arrow buttons below the text box can be used to navigate 
+        the tutorial pages in order. Naturally, the right arrow is used to go to the next page, and the left arrow navigates to the previous page.
+        The label above the text box displays the name of the page.
+    </p>
+    <p>
+        Specific pages can be accessed from the "Page" menu at the top of the Tutorial Page. You can navigate away from the tutorial page at any time. 
+        Each page of the tutorial will outline the features of its app page, as well as the popups it can generate.
+    </p>   
+
+<h2> General </h2>
+    <p>
+        The pages of the interface are navigable via the buttons in the navigation tray on the left hand side of the page. The name of the current page is displayed above the buttons.
+        Each page has a widget frame comprising the majority of its area, and a small area below the widget frame called the "alert box," where messages and warnings are displayed.
+        The app has a Home Page, for loading files and navigating, a Make Spectrum Page, for creating a <code>Spectrum</code> object from loaded files, a Spectra Page, for viewing data from files and spectra and performing spectral operations, and a Graph Page, for graphing <code>Spectrum<code> object, and making and customising plots.
+    </p>
+
+    <h2> <code>Spectrum</code> Objects </h2>
+        <p>
+        These are the main data structures of Spectacular. It is an object with a <code>name</code> attribute, used to identify the object within 
+        the <code>App</code>'s <code>spectra</code> dictionary. It also has <code>xdata</code> and <code>ydata</code> attributes; these are pandas 
+        Series objects representing the independent and dependent axes of the dataset. Lastly, the <code>df</code> attribute is a pandas DataFrame 
+        object, with <code>xdata</code> and <code>ydata</code> as the columns.
+        </p>
+</html>
