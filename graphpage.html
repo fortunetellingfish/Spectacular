@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<p>
+This is the primary page for visualising data on plots. 
+Only <code>Spectrum</code> objects can be added to plots. 
+The <code>y</code> Series attribute of the object is plotted agaist the <code>x</code> Series attribute.
+</p>
+
+<h2> Widgets </h2>
+    <ul>
+        <li><strong> Graph frame: </strong> This widget displays one matplotlib plot at a time. By default, there is one plot in the app's memory and displayed on the Graph Page, called "Plot 1" for the user to interact with. this plot can, of course, be deleted </li>
+        <li><strong> Plot buttons: </strong> These are buttons located on the right of the raised graph tray to the right of the Graph Frame. These buttons are for interacting with the figure and axis, and they include:
+            <ul>
+                <li> New Plot </li>
+                <li> Delete Plot </li>
+                <li> Modify Plot </li>
+                <li> Show Plot </li>
+                <li> Update Legend* </li>
+            </ul> </li>
+
+        <li><strong> Trace buttons: </strong> These are buttons located on the left of the graph tray for interacting with traces (lines) on the plots, and they include:
+            <ul>
+                <li> Add Trace </li>
+                <li> Delete Trace </li>
+                <li> Modify Trace </li>
+            </ul> </li>
+
+        <li><strong> Plot toolbar: </strong> This is a matplotlib toolbar. The buttons can zoom and pan the axes, toggle different axis views, and save the figure to the disk. </li>
+    </ul>
+
+<h2> Popups </h2>
+    <ul>
+        <li><strong> New Plot popup: <strong> Triggered by the "New Plot" button, this popup allows the user to create a new figure. The user must provide a title for the figure by which it can be identified. </li>
+        <li><strong> Delete Plot popup: </strong> Instantiated by clicking the "Delete Plot" button, this popup enables the user to remove a plot from the app's memory. She must select the plot name from the drop down list she wishes to delete. Deleting a plot will delete all of its traces as well, but will not replace the corresponding `Spectrum` objects. </li>
+        <li><strong> Modify Plot popup: </strong> This popup, made by clicking the "Modify Plot" button, allows the user to customize the figure and axis. Aspects that can be modified are:
+            <ul>
+                <li> The figure title </li>
+                <li> x and y labels </li>
+                <li> x and y limits (i.e. the range of the axes) </li>
+                <li> Toggle the legend. </li>
+            </ul> 
+         Only one of these aspects has to be changed in order to activate the 'OK' button and terminate the operation. </li>
+        <li><strong> Show Plot popup: </strong> Made by clicking the "Show Plot" button, this popup lets the user view a specific plot in the graph frame widget. The user must select the name of the desired plot from the drop-down list. </li>
+        <li><strong> Add Trace popup: </strong> The "Add Trace" button creates this popup, which allows the user to plot the data of a spectrum. The user must select the figure to which the trace is to be added, the spectrum to add as a trace, the line width and the colour of the trace. </li>
+        <li><strong> Delete Trace popup: </strong> Created by clicking the "Delete Trace" button, this popup allows the user to remove a trace from a particular plot. The user must simply provide the plot on which the trace appears, and the name of the trace, both selected from drop-down lists. </li>
+        <li><strong> Modify Trace popup: </strong> Instantiated by the "Modify Trace" button, this popup allows the user to change some parameters of a trace. Namely, the linewidth and colour of the trace. Only one of these needs to be changed to activate the "OK" button. In any case, the user must provide the plot and name of the trace. </li>
+    </ul>
+<p>
+    * The "Update Legend" button does not trigger a popup, but refreshes the legend on the plot currently displayed on the Graph Page. For more information, check the "Graph Page" section of the README.
+</p>
+</html>
