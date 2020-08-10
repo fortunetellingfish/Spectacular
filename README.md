@@ -32,9 +32,8 @@
           More file type compatibility.
 
     + ### Tutorial Page  (**in development**) ###
-        &nbsp; A page, similar to this README, intended to outline the usage specifications of the application, but with fewer "under the hood" details. The only widget so far is a text box.  
-        + #### Roadmap ####
-            Write external md files detailing usage of each app page and import them into the text box, and implement tutorial page navigation buttons, to "turn the pages" of the tutorial.
+        &nbsp; A page, similar to this README, intended to outline the usage specifications of the application only. There are several external html files in this directory which are loaded in when needed. The `Tutorial Page` has a `pages` list attribute of two-tuples, each containing a `str` page title and a function call to open and read the html file for that page. The `tk_html_widgets` module's `HTMLScrolledText` widget is used to render and display the HTML. There are buttons below the text widget, which navigate the tutorial pages in a "previous/next" fashion, according to their order in the `pages` list. Either button will become disabled when the extremum of its navigation direction is reached. Note, here, that negative indexing is not supported. The `TutorialPage`'s state also holds an integer `currentPage` attribute, since using an iterator would make backward navigation much more difficult.
+
     + ### Make Spectrum Page ###
          &nbsp; From this page, data loaded from a file is used to instantiate a Spectrum object. The user must choose a source file, and select which column will denote the x axis and which will denote the y axis. The user must also provide a name for the Spectrum object.  
          &nbsp; When the user selects a source fikle from the drop-down list, the data will appear in the preview box on the right-hand side of the widget frame.

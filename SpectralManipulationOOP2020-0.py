@@ -28,10 +28,11 @@ pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', None)
 
 SOFTWARE_NAME = "Spectacular"
-VERSION_NUMBER = "v.0.7.0"
+VERSION_NUMBER = "v.0.7.1"
 
 #=================================================================================================================================================
 class Minerals(Enum):
+    # helper class for the grinding curve operation
     CALCITE = ([875, 1420, 713], True)
     ARAGONITE = ([713,860,1500], True)
 
@@ -535,6 +536,7 @@ class GraphPage(AppPage):
 
 #=======================================================================================================================================================================================================================
 class TutorialPage(AppPage):
+    ## a page used to instruct the user how to use the app
     def __init__(self, parent, controller):
         super().__init__(parent, controller)
 
@@ -546,16 +548,18 @@ class TutorialPage(AppPage):
                       ("Spectra Page", open("spectrapage.html", 'r').read()),
                       ("Graph Page", open("graphpage.html", 'r').read())
                       ]
-        self.currentPage = 0
+        # list of two tuples containing the name of the page and the function call to open and read the html file for each page of the tutorial.
+
+        self.currentPage = 0 #send the landing page to be the overview
         self.displayPage() 
 
     def makeWidgets(self):
-        self.tutorialLabel = tk.Label(self.widgetFrame)
+        self.tutorialLabel = tk.Label(self.widgetFrame) #this label displays the name of the current page of the tutorial
         self.tutorialLabel.grid(row=0, column=0, padx=10, pady=10, sticky='nsew')
-        self.tutorialText = HTMLScrolledText(self.widgetFrame, width=120, height=30)
+        self.tutorialText = HTMLScrolledText(self.widgetFrame, width=120, height=30) # this widget renders and displays the HTML text of the tutorial
         self.tutorialText.grid(row=1, column=0, padx=10, pady=10, sticky='nsew')
         
-        buttonFrame = tk.Frame(self.widgetFrame)
+        buttonFrame = tk.Frame(self.widgetFrame) # this frame holds the '<' and '>' buttons
         buttonFrame.grid(row=2, column=0)
         self.previousButton = ttk.Button(buttonFrame, text="<", command=self.previousPage)
         self.previousButton.grid(row=0, column=0, sticky='e')
@@ -579,14 +583,16 @@ class TutorialPage(AppPage):
 
     def displayPage(self):
         if self.currentPage < 0:
-            raise IndexError
+            raise IndexError #avoid backward indexing
         self.tutorialLabel.configure(text=self.pages[self.currentPage][0])
+        self.tutorialText.configure(state='normal')
         self.tutorialText.set_html(self.pages[self.currentPage][1])
+        self.tutorialText.configure(state='disabled')
 
     def previousPage(self):
         try:
             self.previousButton.configure(state='normal')
-            self.nextButton.configure(state='normal')
+            self.nextButton.configure(state='normal') #make sure both buttons aren't disabled at once
             self.currentPage -= 1
             self.displayPage()
         except IndexError:
