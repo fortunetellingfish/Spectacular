@@ -20,6 +20,7 @@ import tkinter as tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from tkinter import ttk
 from tkinter import scrolledtext as tkst
+from tk_html_widgets import HTMLScrolledText
 
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
@@ -27,7 +28,7 @@ pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', None)
 
 SOFTWARE_NAME = "Spectacular"
-VERSION_NUMBER = "v.0.6.2"
+VERSION_NUMBER = "v.0.7.0"
 
 #=================================================================================================================================================
 class Minerals(Enum):
@@ -61,7 +62,7 @@ class App(tk.Tk): ###The controller of all pages, & control of operations
             self.frames[F] = frame
 
             self.wm_title(SOFTWARE_NAME + " " + VERSION_NUMBER)
-         #   self.iconphoto(True, tk.PhotoImage(file='icon.png'))
+            self.iconphoto(True, tk.PhotoImage(file='icon.png'))
             
             frame.grid(row=0, column=0, sticky="nsew")
 
@@ -539,16 +540,28 @@ class TutorialPage(AppPage):
 
         self.pageLabel.configure(text="Tutorial")
 
-        self.gettingStartedText = ""
-        self.makeSpectrumText = ""
-        self.spectraText = ""
-        self.graphText = ""
+        self.pages = [("Overview", open("overview.html", 'r').read()),
+                      ("Homepage", open("homepage.html", 'r').read()),
+                      ("Make Spectrum Page", open("makespectrumpage.html", 'r').read()),
+                      ("Spectra Page", open("spectrapage.html", 'r').read()),
+                      ("Graph Page", open("graphpage.html", 'r').read())
+                      ]
+        self.currentPage = 0
+        self.displayPage() 
 
     def makeWidgets(self):
-        tutorialBox = tk.Text(self.widgetFrame, state='disabled', bg='white', width=50, height=35)
-        tutorialBox.grid(row=0, column=0, sticky='nsew')
-        vscrollbar = ttk.Scrollbar(tutorialBox, orient='vertical', command=tutorialBox.yview)
-        vscrollbar.grid(row=0, column=1, sticky='ns')
+        self.tutorialLabel = tk.Label(self.widgetFrame)
+        self.tutorialLabel.grid(row=0, column=0, padx=10, pady=10, sticky='nsew')
+        self.tutorialText = HTMLScrolledText(self.widgetFrame, width=120, height=30)
+        self.tutorialText.grid(row=1, column=0, padx=10, pady=10, sticky='nsew')
+        
+        buttonFrame = tk.Frame(self.widgetFrame)
+        buttonFrame.grid(row=2, column=0)
+        self.previousButton = ttk.Button(buttonFrame, text="<", command=self.previousPage)
+        self.previousButton.grid(row=0, column=0, sticky='e')
+        self.nextButton = ttk.Button(buttonFrame, text=">", command=self.nextPage)
+        self.nextButton.grid(row=0, column=1, sticky='w')
+        
         super().makeWidgets()
 
     def makeNavigationButtons(self):
@@ -563,6 +576,33 @@ class TutorialPage(AppPage):
 
         makeSpectrumPageButton = ttk.Button(self.navigationTray, text=AppPage.MAKESPECTRUMPAGE_TEXT, command=lambda:self.controller.show_frame(MakeSpectrumPage))
         makeSpectrumPageButton.grid(row=4, column=0, padx=10, sticky='nsew')
+
+    def displayPage(self):
+        if self.currentPage < 0:
+            raise IndexError
+        self.tutorialLabel.configure(text=self.pages[self.currentPage][0])
+        self.tutorialText.set_html(self.pages[self.currentPage][1])
+
+    def previousPage(self):
+        try:
+            self.previousButton.configure(state='normal')
+            self.nextButton.configure(state='normal')
+            self.currentPage -= 1
+            self.displayPage()
+        except IndexError:
+            self.currentPage +=1
+            self.previousButton.configure(state='disabled')
+    
+    def nextPage(self):
+        try:
+            self.nextButton.configure(state='normal')
+            self.previousButton.configure(state='normal')
+            self.currentPage += 1
+            self.displayPage()
+        except IndexError:
+            self.currentPage -=1
+            self.nextButton.configure(state='disabled')
+        
 #=======================================================================================================================================================================================================================
 class Spectrum: #Objects of this class are two-column structures.
     def __init__(self, name, sourcedf, x, y):
