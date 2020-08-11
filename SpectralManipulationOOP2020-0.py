@@ -28,7 +28,7 @@ pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', None)
 
 SOFTWARE_NAME = "Spectacular"
-VERSION_NUMBER = "v.0.7.1"
+VERSION_NUMBER = "v.0.7.2"
 
 #=================================================================================================================================================
 class Minerals(Enum):
@@ -96,15 +96,6 @@ class App(tk.Tk): ###The controller of all pages, & control of operations
 
     def save(self, key, savefilename):
         self.spectra[key].df.to_csv(savefilename)
-
-    def get_dfs(self):
-        return self.dfs
-
-    def get_spectra(self):
-        return self.spectra
-
-    def get_plots(self):
-        return self.plots
 
     def rename_plot(self, oldKey, newKey):
         self.plots[newKey] = self.plots.pop(oldKey)
@@ -310,7 +301,7 @@ class MakeSpectrumPage(AppPage):
 
         #make source file chooser & label
         fileLabel = tk.Label(self.widgetFrame, text="Source File:").grid(row=1, column=0, padx=10, pady=10)
-        self.fileCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.controller.get_dfs().keys()), textvariable=self.filenameVar, width=70)
+        self.fileCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.controller.dfs.keys()), textvariable=self.filenameVar, width=70)
         self.fileCombobox.grid(row=1, column=1, padx=10, pady=10, sticky='ew')
 
         #Make a scrollable widget to preview the csv file
@@ -357,19 +348,19 @@ class MakeSpectrumPage(AppPage):
 
     def insertItems(self):
         #Populate the file list with keys from the App's file/dataframe dictionary
-        self.fileCombobox.configure(values=list(self.controller.get_dfs().keys()))
+        self.fileCombobox.configure(values=list(self.controller.dfs.keys()))
 
     def filenameSelected(self, *args):
         if self.filenameVar.get():
             #activate xy fields
-            self.xField.configure(values=list(self.controller.get_dfs()[self.filenameVar.get()].columns), state='readonly')
-            self.yField.configure(values=list(self.controller.get_dfs()[self.filenameVar.get()].columns), state='readonly')
+            self.xField.configure(values=list(self.controller.dfs[self.filenameVar.get()].columns), state='readonly')
+            self.yField.configure(values=list(self.controller.dfs[self.filenameVar.get()].columns), state='readonly')
             self.xField.set("")
             self.yField.set("")
             #show preview & disable the textbox
             self.dfPreview.configure(state='normal')
             self.dfPreview.delete(1.0, 'end')
-            self.dfPreview.insert('end', str(self.controller.get_dfs()[self.filenameVar.get()]))
+            self.dfPreview.insert('end', str(self.controller.dfs[self.filenameVar.get()]))
             self.dfPreview.configure(state='disabled')
 
     def activateCreate(self, *args):
@@ -381,7 +372,7 @@ class MakeSpectrumPage(AppPage):
     def makeSpectrum(self):
         #make a Spectrum object
         try:
-            self.controller.make_spectrum(self.nameVar.get(), self.controller.get_dfs()[self.filenameVar.get()], self.xVar.get(), self.yVar.get())
+            self.controller.make_spectrum(self.nameVar.get(), self.controller.dfs[self.filenameVar.get()], self.xVar.get(), self.yVar.get())
             self.alertBox.config(text="Spectrum added to list.")
 
         except KeyError:
@@ -469,20 +460,20 @@ class SpectraPage(AppPage):
         self.tableViewer.configure(state='normal')
         self.tableViewer.delete(1.0, 'end')
         if self.spectrumVar.get():
-            self.tableViewer.insert(tk.INSERT, self.controller.get_spectra()[self.spectraCombobox.get()].df)
+            self.tableViewer.insert(tk.INSERT, self.controller.spectra[self.spectraCombobox.get()].df)
             self.viewerLabel.configure(text=self.spectrumVar.get())
             self.spectraCombobox.set('')
         if self.dfVar.get():
-            self.tableViewer.insert(tk.INSERT, self.controller.get_dfs()[self.dfVar.get()])
+            self.tableViewer.insert(tk.INSERT, self.controller.dfs[self.dfVar.get()])
             self.viewerLabel.configure(text=self.dfVar.get())
             self.dfCombobox.set('')
         self.tableViewer.configure(state='disabled')
 
     def insertItems(self):
         self.spectraCombobox.set('')
-        self.spectraCombobox.configure(values=list(self.controller.get_spectra().keys()))
+        self.spectraCombobox.configure(values=list(self.controller.spectra.keys()))
         self.dfCombobox.set('')
-        self.dfCombobox.configure(values=list(self.controller.get_dfs().keys()))
+        self.dfCombobox.configure(values=list(self.controller.dfs.keys()))
 
 #===================================================================================================================================
 class GraphPage(AppPage):
@@ -490,7 +481,7 @@ class GraphPage(AppPage):
         super().__init__(parent, controller)
         
         self.controller.make_plot('Plot 1')
-        self.showFigure(self.controller.get_plots()['Plot 1'])
+        self.showFigure(self.controller.plots['Plot 1'])
         self.pageLabel.configure(text="Graph Page")
 
     def makeWidgets(self):
@@ -718,7 +709,7 @@ class DuplicateSpectrumPopup(ConditionalPopup):
         
         spectrumLabel = tk.Label(self.widgetFrame, text="Source:")
         spectrumLabel.grid(row=1, column=0, padx=10, pady=10, sticky='e')
-        spectrumCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_spectra().keys()), textvariable=self.spectrumVar)
+        spectrumCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.spectra.keys()), textvariable=self.spectrumVar)
         spectrumCombobox.grid(row=1, column=1, padx=10, pady=10, sticky='w')
 
         self.makeAlertBox()
@@ -728,7 +719,7 @@ class DuplicateSpectrumPopup(ConditionalPopup):
         if self.nameVar.get() == self.spectrumVar.get():
             self.alertBox.configure(text="Names cannot be the same!")
         else:
-            self.master.controller.make_spectrum(self.nameVar.get(), self.master.controller.get_spectra()[self.spectrumVar.get()].df, self.master.controller.get_spectra()[self.spectrumVar.get()].df.columns[0], self.master.controller.get_spectra()[self.spectrumVar.get()].df.columns[1])
+            self.master.controller.make_spectrum(self.nameVar.get(), self.master.controller.spectra[self.spectrumVar.get()].df, self.master.controller.spectra[self.spectrumVar.get()].df.columns[0], self.master.controller.spectra[self.spectrumVar.get()].df.columns[1])
             super().okPressed()
 
 #=====================================================================================================================================================================================================================================================================================================
@@ -741,7 +732,7 @@ class DeleteSpectrumPopup(ConditionalPopup):
         spectrumVar = tk.Label(self.widgetFrame, text="Spectrum:")
         spectrumVar.grid(row=0, column=0, padx=10, pady=10, sticky='e')
         
-        spectrumCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_spectra().keys()), textvariable=self.spectrumVar)
+        spectrumCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.spectra.keys()), textvariable=self.spectrumVar)
         spectrumCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
         super().makeWidgets()
@@ -760,7 +751,7 @@ class SaveSpectrumPopup(ConditionalPopup):
         #spectrum label and combobox
         spectrumLabel = tk.Label(self.widgetFrame, text="Spectrum:")
         spectrumLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        spectrumCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_spectra().keys()), textvariable=self.spectrumVar)
+        spectrumCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.spectra.keys()), textvariable=self.spectrumVar)
         spectrumCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
         super().makeWidgets()
 
@@ -786,13 +777,13 @@ class AddTracePopup(GraphPopup):
         #plot label and combobox
         plotLabel = tk.Label(self.widgetFrame, text="Plot:")
         plotLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_plots().keys()), textvariable=self.plotVar)
+        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotVar)
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
         #spectrum label and combobox
         spectrumLabel = tk.Label(self.widgetFrame, text="Spectrum:")
         spectrumLabel.grid(row=1, column=0, padx=10, pady=10, sticky='e')
-        spectrumCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_spectra().keys()), textvariable=self.spectrumVar)
+        spectrumCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.spectra.keys()), textvariable=self.spectrumVar)
         spectrumCombobox.grid(row=1, column=1, padx=10, pady=10, sticky='w')
 
         #colour label and combobox
@@ -812,8 +803,8 @@ class AddTracePopup(GraphPopup):
 
     def okPressed(self, *args):
         try:
-            self.master.controller.graph(self.master.controller.get_plots()[self.plotVar.get()].axes[0],
-                                            self.master.controller.get_spectra()[self.spectrumVar.get()],
+            self.master.controller.graph(self.master.controller.plots[self.plotVar.get()].axes[0],
+                                            self.master.controller.spectra[self.spectrumVar.get()],
                                             color=self.colorVar.get(),
                                             linewidth=float(self.linewidthVar.get()))
             
@@ -835,7 +826,7 @@ class DeleteTracePopup(GraphPopup):
         #plot label and combobox
         plotLabel = tk.Label(self.widgetFrame, text="Plot:")
         plotLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_plots().keys()), textvariable=self.plotNameVar)
+        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotNameVar)
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
         #trace label and combobox
@@ -848,12 +839,12 @@ class DeleteTracePopup(GraphPopup):
     def activateTraceField(self, *args):
         if self.plotNameVar.get():
             traces = []
-            for line in self.master.controller.get_plots()[self.plotNameVar.get()].axes[0].lines :
+            for line in self.master.controller.plots[self.plotNameVar.get()].axes[0].lines :
                 traces.append(line.get_label())
         self.traceCombobox.configure(state='readonly', values=traces)
 
     def okPressed(self, *args):
-        for line in self.master.controller.get_plots()[self.plotNameVar.get()].axes[0].lines:
+        for line in self.master.controller.plots[self.plotNameVar.get()].axes[0].lines:
             if line.get_label() == self.traceVar.get():
                 line.remove()
                 break
@@ -872,7 +863,7 @@ class ModifyTracePopup(GraphPopup):
     def activateTraceField(self, *args):
         if self.plotNameVar.get():
             traces = []
-            for line in self.master.controller.get_plots()[self.plotNameVar.get()].axes[0].lines :
+            for line in self.master.controller.plots[self.plotNameVar.get()].axes[0].lines :
                 traces.append(line.get_label())
  
             self.traceCombobox.configure(state='readonly', values=traces)
@@ -887,7 +878,7 @@ class ModifyTracePopup(GraphPopup):
         #plot label and combobox
         plotLabel = tk.Label(self.widgetFrame, text="Plot:")
         plotLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_plots().keys()), textvariable=self.plotNameVar)
+        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotNameVar)
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
        
         #trace label and combobox
@@ -918,7 +909,7 @@ class ModifyTracePopup(GraphPopup):
 
     def okPressed(self, *args):
         try:
-            for line in self.master.controller.get_plots()[self.plotNameVar.get()].axes[0].lines :
+            for line in self.master.controller.plots[self.plotNameVar.get()].axes[0].lines :
                 if line.get_label() == self.traceVar.get():
                     if self.linewidthVar.get():
                         line.set_linewidth(float(self.linewidthVar.get()))
@@ -953,7 +944,7 @@ class ArithmeticPopup(ConditionalPopup):
         s1Label = tk.Label(self.widgetFrame, text="Spectrum 1:")
         s1Label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
         
-        s1Combobox = ttk.Combobox(frame, values=list(self.master.controller.get_spectra().keys()), state='readonly', textvariable=self.s1Var)
+        s1Combobox = ttk.Combobox(frame, values=list(self.master.controller.spectra.keys()), state='readonly', textvariable=self.s1Var)
         s1Combobox.grid(row=1, column=1, padx=10, pady=10,sticky='w')
 
         opLabel = tk.Label(self.widgetFrame, text="Operation:")
@@ -965,7 +956,7 @@ class ArithmeticPopup(ConditionalPopup):
         s2Label = tk.Label(self.widgetFrame, text="Spectrum 2:")
         s2Label.grid(row=3, column=0, padx=10, pady=10, sticky='e')
 
-        self.s2Combobox = ttk.Combobox(self.widgetFrame, values=list(self.master.controller.get_spectra().keys()), state='disabled')
+        self.s2Combobox = ttk.Combobox(self.widgetFrame, values=list(self.master.controller.spectra.keys()), state='disabled')
         self.s2Combobox.grid(row=3, column=1, padx=10, pady=10, sticky='w')
 
         self.makeAlertBox()
@@ -981,10 +972,10 @@ class ArithmeticPopup(ConditionalPopup):
     def okPressed(self, *args):
         try:
             if self.s2Var is not None:
-                result = self.master.controller.operation(self.functionClass, self.opVar.get(), self.nameVar.get(), self.master.controller.get_spectra()[self.s1Var.get()], self.master.controller.get_spectra()[self.s2Var.get()])
+                result = self.master.controller.operation(self.functionClass, self.opVar.get(), self.nameVar.get(), self.master.controller.spectra[self.s1Var.get()], self.master.controller.spectra[self.s2Var.get()])
 
             else:
-                result = self.master.controller.operation(self.functionClass, self.opVar.get(), self.nameVar.get(), self.master.controller.get_spectra()[self.s1Var.get()])
+                result = self.master.controller.operation(self.functionClass, self.opVar.get(), self.nameVar.get(), self.master.controller.spectra[self.s1Var.get()])
 
             super().okPressed()
 
@@ -1030,12 +1021,12 @@ class GrindingCurvePopup(ConditionalPopup):
 
     def fillListbox(self):
         #populate the listbox with the spectra names
-        for spectrumName in self.master.controller.get_spectra().keys():
+        for spectrumName in self.master.controller.spectra.keys():
             self.spectraListbox.insert('end', spectrumName)
         
     def activateOK(self, *args):
         for i in self.spectraListbox.curselection():
-            self.spectra.append(self.master.controller.get_spectra()[self.spectraListbox.get(i)])
+            self.spectra.append(self.master.controller.spectra[self.spectraListbox.get(i)])
         if self.spectra:
            super().activateOK() 
         
@@ -1060,7 +1051,7 @@ class ZeroSpectrumPopup(ConditionalPopup):
     def makeWidgets(self):
         spectraLabel = tk.Label(self.widgetFrame, text="Spectrum:")
         spectraLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        spectraCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_spectra().keys()), textvariable=self.spectrumVar)
+        spectraCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.spectra.keys()), textvariable=self.spectrumVar)
         spectraCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
         nameLabel = tk.Label(self.widgetFrame, text="Name the result spectrum:")
@@ -1090,7 +1081,7 @@ class ZeroSpectrumPopup(ConditionalPopup):
     def okPressed(self, *args):
         if not self.newNameVar.get().strip():
             self.newNameVar.set(self.spectrumVar.get())
-        self.master.controller.operation(ParameterisedOperations, 'zero', self.newNameVar.get(), self.master.controller.get_spectra()[self.spectrumVar.get()], leftidx=int(self.leftIndexVar.get()), rightidx=int(self.rightIndexVar.get()))
+        self.master.controller.operation(ParameterisedOperations, 'zero', self.newNameVar.get(), self.master.controller.spectra[self.spectrumVar.get()], leftidx=int(self.leftIndexVar.get()), rightidx=int(self.rightIndexVar.get()))
         super().okPressed()
 
 #==========================================================================================================================================================================================================================================================================
@@ -1110,7 +1101,7 @@ class NewPlotPopup(ConditionalPopup):
 
     def okPressed(self, *args):
         self.master.controller.make_plot(self.plotNameVar.get())
-        self.master.showFigure(self.master.controller.get_plots()[self.plotNameVar.get()])
+        self.master.showFigure(self.master.controller.plots[self.plotNameVar.get()])
         super().okPressed()
 
 #======================================================================================================================================================
@@ -1123,7 +1114,7 @@ class DeletePlotPopup(GraphPopup):
         plotLabel = tk.Label(self.widgetFrame, text="Plot to delete")
         plotLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
         
-        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_plots().keys()), textvariable=self.plotNameVar)
+        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotNameVar)
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
         
         super().makeWidgets()
@@ -1132,8 +1123,8 @@ class DeletePlotPopup(GraphPopup):
         self.master.controller.delete_plot(self.plotNameVar.get())
         self.master.canvas.get_tk_widget().delete('all')
 
-        if len(self.master.controller.get_plots()) >=1:
-            self.master.showFigure(list(self.master.controller.get_plots().values())[0])
+        if len(self.master.controller.plots) >=1:
+            self.master.showFigure(list(self.master.controller.plots.values())[0])
         super().okPressed()
         
 #==============================================================================================================================================
@@ -1146,13 +1137,13 @@ class ShowPlotPopup(GraphPopup):
         nameLabel = tk.Label(self.widgetFrame, text="Show plot:")
         nameLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
         
-        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_plots().keys()), textvariable=self.plotNameVar)        
+        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotNameVar)        
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
         super().makeWidgets()
 
     def okPressed(self, *args):
-        self.master.showFigure(self.master.controller.get_plots()[self.plotNameVar.get()])
+        self.master.showFigure(self.master.controller.plots[self.plotNameVar.get()])
         super().okPressed()
 
 #==============================================================================================================================================
@@ -1172,7 +1163,7 @@ class ModifyPlotPopup(GraphPopup):
     def makeWidgets(self):
         plotLabel = tk.Label(self.widgetFrame, text="Plot:")
         plotLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.get_plots().keys()), textvariable=self.plotVar)
+        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotVar)
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
         
         titleLabel = tk.Label(self.widgetFrame, text="Rename:")
@@ -1226,22 +1217,22 @@ class ModifyPlotPopup(GraphPopup):
 
     def okPressed(self, *args):
         if self.xVar.get():
-            self.master.controller.get_plots()[self.plotVar.get()].axes[0].set_xlabel(self.xVar.get())
+            self.master.controller.plots[self.plotVar.get()].axes[0].set_xlabel(self.xVar.get())
         if self.yVar.get():
-            self.master.controller.get_plots()[self.plotVar.get()].axes[0].set_ylabel(self.yVar.get())            
+            self.master.controller.plots[self.plotVar.get()].axes[0].set_ylabel(self.yVar.get())            
         if self.legendVar.get():
-            self.master.controller.get_plots()[self.plotVar.get()].axes[0].legend()
+            self.master.controller.plots[self.plotVar.get()].axes[0].legend()
         if not self.legendVar.get():
-            self.master.controller.get_plots()[self.plotVar.get()].axes[0].legend().remove()
+            self.master.controller.plots[self.plotVar.get()].axes[0].legend().remove()
 
         if all(var.get().isnumeric() for var in {self.lxlimVar, self.rxlimVar}):
-            self.master.controller.get_plots()[self.plotVar.get()].axes[0].set_xlim(float(self.lxlimEntry.get()), float(self.rxlimEntry.get()))
+            self.master.controller.plots[self.plotVar.get()].axes[0].set_xlim(float(self.lxlimEntry.get()), float(self.rxlimEntry.get()))
 
         if all(var.get().isnumeric() for var in {self.lylimVar, self.rylimVar}):
-            self.master.controller.get_plots()[self.plotVar.get()].axes[0].set_ylim(float(self.lylimEntry.get()), float(self.rylimEntry.get()))
+            self.master.controller.plots[self.plotVar.get()].axes[0].set_ylim(float(self.lylimEntry.get()), float(self.rylimEntry.get()))
 
         if self.titleVar.get():
-            self.master.controller.get_plots()[self.plotVar.get()].suptitle(self.titleVar.get())
+            self.master.controller.plots[self.plotVar.get()].suptitle(self.titleVar.get())
             self.master.controller.rename_plot(self.plotVar.get(), self.titleVar.get())
 
         super().okPressed()
