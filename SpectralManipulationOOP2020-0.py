@@ -10,16 +10,16 @@ import pandas as pd
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import matplotlib.colors as mcolors
-import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 
 from scipy.signal import find_peaks
 
 import tkinter as tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from tkinter import ttk
-from tkinter import scrolledtext as tkst
 from tk_html_widgets import HTMLScrolledText
 
 pd.set_option('display.max_rows', None)
@@ -106,15 +106,21 @@ class App(tk.Tk): ###The controller of all pages, & control of operations
         self.updatePages()
         return spectrum
 
-    def make_plot(self, name):
+    def make_plot(self, name, numOfSubplots=1):
         fig = Figure(figsize=(8.5, 5.5), dpi=100)
+        fig.set_tight_layout(True)
         fig.suptitle(name)
-        axis = fig.add_subplot(111)
+
+        gs = GridSpec(nrows=numOfSubplots, ncols=1)
+        for i in range(numOfSubplots):
+            subplotspec = gs.new_subplotspec((i,0))
+            axis = fig.add_subplot(subplotspec)
+
         self.plots[name] = fig
 
     def delete_spectrum(self, name):
         del self.spectra[name]
-        self.frames[SpectraPage].insertItems()
+        self.updatePages()
 
     def delete_plot(self, name):
         plt.close(self.plots.pop(name))
@@ -164,7 +170,7 @@ class ParameterisedOperations:
     @classmethod
     def zero(cls, spectrum, leftidx=0, rightidx=0): #zero the spectrum between two indices
         y = spectrum.ydata
-        y[leftidx:rightidx] = 0
+        y.loc[leftidx:rightidx] = 0
         return pd.concat([spectrum.xdata, y], axis=1)
     
     @classmethod
@@ -489,16 +495,24 @@ class GraphPage(AppPage):
         self.graphTray = tk.Frame(self.widgetFrame, width=50, borderwidth=2, relief=tk.RAISED)
         self.graphTray.grid(row=0, column=2, padx=10, pady=10, sticky='nsew')
 
-        addTraceButton = ttk.Button(self.graphTray, text="Add Trace", command=lambda:AddTracePopup(self)).grid(row=0, column=0, sticky='nsew')
-        deleteTraceButton = ttk.Button(self.graphTray, text="Delete Trace", command=lambda:DeleteTracePopup(self)).grid(row=1, column=0, sticky='nsew')
-        modifyTraceButton = ttk.Button(self.graphTray, text="Modify Trace", command=lambda:ModifyTracePopup(self)).grid(row=2, column=0, sticky='nsew')
+        addTraceButton = ttk.Button(self.graphTray, text="Add Trace", command=lambda:AddTracePopup(self))
+        addTraceButton.grid(row=0, column=0, sticky='nsew')
+        deleteTraceButton = ttk.Button(self.graphTray, text="Delete Trace", command=lambda:DeleteTracePopup(self))
+        deleteTraceButton.grid(row=1, column=0, sticky='nsew')
+        modifyTraceButton = ttk.Button(self.graphTray, text="Modify Trace", command=lambda:ModifyTracePopup(self))
+        modifyTraceButton.grid(row=2, column=0, sticky='nsew')
     
-        updateLegendButton = ttk.Button(self.graphTray, text="Update Legend", command=self.updateLegend).grid(row=4, column=1, sticky='nsew')
+        updateLegendButton = ttk.Button(self.graphTray, text="Update Legend", command=self.updateLegend)
+        updateLegendButton.grid(row=4, column=1, sticky='nsew')
 
-        newPlotButton = ttk.Button(self.graphTray, text="New Plot", command=lambda:NewPlotPopup(self)).grid(row=0, column=1, sticky='nsew')
-        deletePlotButton = ttk.Button(self.graphTray, text="Delete Plot", command=lambda:DeletePlotPopup(self)).grid(row=1, column=1, sticky='nsew')
-        modifyPlotButton = ttk.Button(self.graphTray, text="Modify Plot", command=lambda:ModifyPlotPopup(self)).grid(row=2, column=1, sticky='nsew')
-        showPlotButton = ttk.Button(self.graphTray, text="Show Plot", command=lambda:ShowPlotPopup(self)).grid(row=3, column=1, sticky='nsew')
+        newPlotButton = ttk.Button(self.graphTray, text="New Plot", command=lambda:NewPlotPopup(self))
+        newPlotButton.grid(row=0, column=1, sticky='nsew')
+        deletePlotButton = ttk.Button(self.graphTray, text="Delete Plot", command=lambda:DeletePlotPopup(self))
+        deletePlotButton.grid(row=1, column=1, sticky='nsew')
+        modifyPlotButton = ttk.Button(self.graphTray, text="Modify Plot", command=lambda:ModifyPlotPopup(self))
+        modifyPlotButton.grid(row=2, column=1, sticky='nsew')
+        showPlotButton = ttk.Button(self.graphTray, text="Show Plot", command=lambda:ShowPlotPopup(self))
+        showPlotButton.grid(row=3, column=1, sticky='nsew')
 
         super().makeWidgets()
             
@@ -522,7 +536,8 @@ class GraphPage(AppPage):
         spectraPageButton.grid(row=2, column=0, padx=10, sticky='nsew')
 
     def updateLegend(self):
-        self.canvas.figure.axes[0].legend()
+        for ax in self.canvas.figure.axes:
+            ax.legend().set_draggable(True)
         self.canvas.draw()
 
 #=======================================================================================================================================================================================================================
@@ -675,7 +690,6 @@ class LoadDelimitedFilePopup(ConditionalPopup):
         fileChooserButton.grid(row=0, column=0, padx=10, pady=10, sticky='nsew')
 
         delimiterCombobox = ttk.Combobox(self.widgetFrame, values=list(self.delimiters.keys()), textvariable=self.delimiterVar)
-        delimiterCombobox.set("Select a delimiter")
         delimiterCombobox.configure(state='readonly')
         delimiterCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='nsew')
 
@@ -758,20 +772,13 @@ class SaveSpectrumPopup(ConditionalPopup):
     def okPressed(self, *args):
         self.master.controller.save(self.spectrumVar.get(), asksaveasfilename())
 
-#=====================================================================================================================================================================================================================================================================================================
-class AddTracePopup(GraphPopup):
-    #a popup that enables adding a trace to a chosen plot
-    def __init__(self, master):
-        super().__init__(master, "Add trace to plot",
-                         plotVar=tk.StringVar(),
-                         spectrumVar=tk.StringVar(),
-                         colorVar=tk.StringVar(),
-                         linewidthVar=tk.StringVar())
-
-
-    def activateOK(self, *args):
-        if self.linewidthVar.get().isdecimal():
-            super().activateOK(*args)
+#======================================================================================================================================================================================================================================================================================================
+class TracePopup(GraphPopup):
+    def __init__(self, master, title, **kwargs):
+        super().__init__(master, title, plotVar=tk.StringVar(),
+                                              axisVar=tk.IntVar(),
+                                              traceVar=tk.StringVar(),
+                                              **kwargs)
 
     def makeWidgets(self):
         #plot label and combobox
@@ -780,31 +787,83 @@ class AddTracePopup(GraphPopup):
         plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotVar)
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
+        #axis label and combobox
+        axisLabel = tk.Label(self.widgetFrame, text="Axis:")
+        axisLabel.grid(row=1, column=0, padx=10, pady=10, sticky='e')
+        self.axisCombobox = ttk.Combobox(self.widgetFrame, textvariable=self.axisVar, state='disabled')
+        self.axisCombobox.grid(row=1, column=1, padx=10, pady=10, sticky='w')
+
         #spectrum label and combobox
         spectrumLabel = tk.Label(self.widgetFrame, text="Spectrum:")
-        spectrumLabel.grid(row=1, column=0, padx=10, pady=10, sticky='e')
-        spectrumCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.spectra.keys()), textvariable=self.spectrumVar)
-        spectrumCombobox.grid(row=1, column=1, padx=10, pady=10, sticky='w')
+        spectrumLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
+        self.traceCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.spectra.keys()), textvariable=self.traceVar)
+        self.traceCombobox.grid(row=2, column=1, padx=10, pady=10, sticky='w')
+        super().makeWidgets()
 
+    def traceVars(self):
+        super().traceVars()
+        self.plotVar.trace('w', self.activateAxisField)
+        self.axisVar.trace('w', self.activateTraceField)
+
+    def activateAxisField(self, *args):
+        self.axisCombobox.configure(state='disabled')
+        if self.plotVar.get():
+            self.axisCombobox.configure(state='readonly', values=[i for i in range(len(self.master.controller.plots[self.plotVar.get()].axes))])
+            self.axisVar.set(0)
+
+    def activateTraceField(self, *args):
+        self.traceCombobox.configure(state='disabled')
+        if self.plotVar.get():
+            traces = []
+            for line in self.master.controller.plots[self.plotVar.get()].axes[self.axisVar.get()].lines :
+                traces.append(line.get_label())
+            self.traceCombobox.configure(state='readonly', values=traces)
+
+    def activateOK(self, *args):
+        self.okButton.configure(state='disabled')
+        if self.traceVar.get():
+            self.okButton.configure(state='normal')
+    
+#======================================================================================================================================================================================================================================================================================================
+class AddTracePopup(TracePopup):
+    #a popup that enables adding a trace to a chosen plot
+    def __init__(self, master):
+        super().__init__(master, "Add trace to plot", colorVar=tk.StringVar(),
+                                                      linewidthVar=tk.StringVar())
+
+
+    def activateAxisField(self, *args):
+        self.axisCombobox.configure(state='disabled')
+        if self.plotVar.get():
+            self.axisCombobox.configure(state='readonly', values=[i for i in range(len(self.master.controller.plots[self.plotVar.get()].axes))])
+
+    def activateTraceField(self, *args):
+        self.traceCombobox.configure(state='readonly', values=list(self.master.controller.spectra.keys()))
+        
+    def activateOK(self, *args):
+        if self.colorVar.get() or self.linewidthVar.get():
+            super().activateOK()
+
+    def makeWidgets(self):
         #colour label and combobox
         colourLabel = tk.Label(self.widgetFrame, text="Colour:")
-        colourLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
+        colourLabel.grid(row=3, column=0, padx=10, pady=10, sticky='e')
         colourCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(mcolors.CSS4_COLORS), textvariable=self.colorVar)
-        colourCombobox.grid(row=2, column=1, padx=10, pady=10, sticky='w')
+        colourCombobox.grid(row=3, column=1, padx=10, pady=10, sticky='w')
 
         #linewidth label and entry
         linewidthLabel = tk.Label(self.widgetFrame, text="Line width:")
-        linewidthLabel.grid(row=3, column=0, padx=10, pady=10, sticky='e')
+        linewidthLabel.grid(row=4, column=0, padx=10, pady=10, sticky='e')
         linewidthEntry = ttk.Entry(self.widgetFrame, textvariable=self.linewidthVar)
-        linewidthEntry.grid(row=3, column=1, padx=10, pady=10, sticky='w')
+        linewidthEntry.grid(row=4, column=1, padx=10, pady=10, sticky='w')
 
         self.makeAlertBox()
         super().makeWidgets()
 
     def okPressed(self, *args):
         try:
-            self.master.controller.graph(self.master.controller.plots[self.plotVar.get()].axes[0],
-                                            self.master.controller.spectra[self.spectrumVar.get()],
+            self.master.controller.graph(self.master.controller.plots[self.plotVar.get()].axes[self.axisVar.get()],
+                                            self.master.controller.spectra[self.traceVar.get()],
                                             color=self.colorVar.get(),
                                             linewidth=float(self.linewidthVar.get()))
             
@@ -813,80 +872,34 @@ class AddTracePopup(GraphPopup):
             self.alertBox.configure(text="Line width must be numeric.")
 
 #=========================================================================================================================================================
-class DeleteTracePopup(GraphPopup):
+class DeleteTracePopup(TracePopup):
     def __init__(self, master):
-        super().__init__(master, "Delete trace", plotNameVar=tk.StringVar(),
-                                                 traceVar=tk.StringVar())
-
-    def traceVars(self):
-        super().traceVars()
-        self.plotNameVar.trace('w', self.activateTraceField)
-
-    def makeWidgets(self):
-        #plot label and combobox
-        plotLabel = tk.Label(self.widgetFrame, text="Plot:")
-        plotLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotNameVar)
-        plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
-
-        #trace label and combobox
-        traceLabel = tk.Label(self.widgetFrame, text="Trace:")
-        traceLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
-        self.traceCombobox = ttk.Combobox(self.widgetFrame, state='disabled', textvariable=self.traceVar)
-        self.traceCombobox.grid(row=2, column=1, padx=10, pady=10, sticky='w')
-        super().makeWidgets()
-
-    def activateTraceField(self, *args):
-        if self.plotNameVar.get():
-            traces = []
-            for line in self.master.controller.plots[self.plotNameVar.get()].axes[0].lines :
-                traces.append(line.get_label())
-        self.traceCombobox.configure(state='readonly', values=traces)
+        super().__init__(master, "Delete trace")
 
     def okPressed(self, *args):
-        for line in self.master.controller.plots[self.plotNameVar.get()].axes[0].lines:
+        for line in self.master.controller.plots[self.plotVar.get()].axes[self.axisVar.get()].lines:
             if line.get_label() == self.traceVar.get():
                 line.remove()
                 break
         super().okPressed()
   
 #==============================================================================================================================================
-class ModifyTracePopup(GraphPopup):
+class ModifyTracePopup(TracePopup):
     #popup that enables modification of a trace
     def __init__(self, master):
-        super().__init__(master, "Modify Trace", plotNameVar=tk.StringVar(), traceVar=tk.StringVar(), colorVar=tk.StringVar(), linewidthVar=tk.StringVar())
-
-    def activateOK(self, *args):
-        if self.linewidthVar.get().isdecimal():
-            super().activateOK(*args)
+        super().__init__(master, "Modify Trace", colorVar=tk.StringVar(),
+                                                 linewidthVar=tk.StringVar())
 
     def activateTraceField(self, *args):
-        if self.plotNameVar.get():
+        self.traceCombobox.configure(state='disabled')
+        if self.plotVar.get():
             traces = []
-            for line in self.master.controller.plots[self.plotNameVar.get()].axes[0].lines :
+            for line in self.master.controller.plots[self.plotVar.get()].axes[self.axisVar.get()].lines :
                 traces.append(line.get_label())
  
             self.traceCombobox.configure(state='readonly', values=traces)
-        else:
-            self.traceCombobox.configure(state='disabled', values=[])
-
-    def traceVars(self):
-        super().traceVars()
-        self.plotNameVar.trace('w', self.activateTraceField)
 
     def makeWidgets(self):
-        #plot label and combobox
-        plotLabel = tk.Label(self.widgetFrame, text="Plot:")
-        plotLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotNameVar)
-        plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
-       
-        #trace label and combobox
-        traceLabel = tk.Label(self.widgetFrame, text="Trace:")
-        traceLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
-        self.traceCombobox = ttk.Combobox(self.widgetFrame, state='disabled', textvariable=self.traceVar)
-        self.traceCombobox.grid(row=2, column=1, padx=10, pady=10, sticky='w')
-
         #colour label and combobox
         colourLabel = tk.Label(self.widgetFrame, text="Colour:")
         colourLabel.grid(row=3, column=0, padx=10, pady=10, sticky='e')
@@ -903,13 +916,12 @@ class ModifyTracePopup(GraphPopup):
         super().makeWidgets()
 
     def activateOK(self, *args):
-        self.okButton.configure(state='disabled')
-        if self.traceVar.get() and (self.colorVar.get() or self.linewidthVar.get().isdecimal()) :
-            self.okButton.configure(state='normal')
+        if self.colorVar.get() or self.linewidthVar.get().isdecimal():
+            super().activateOK()
 
     def okPressed(self, *args):
         try:
-            for line in self.master.controller.plots[self.plotNameVar.get()].axes[0].lines :
+            for line in self.master.controller.plots[self.plotVar.get()].axes[self.axisVar.get()].lines :
                 if line.get_label() == self.traceVar.get():
                     if self.linewidthVar.get():
                         line.set_linewidth(float(self.linewidthVar.get()))
@@ -938,13 +950,13 @@ class ArithmeticPopup(ConditionalPopup):
         nameLabel = tk.Label(self.widgetFrame, text="Name the result spectrum:")
         nameLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
         
-        nameEntry = ttk.Entry(frame, textvariable=self.nameVar)
+        nameEntry = ttk.Entry(self.widgetFrame, textvariable=self.nameVar)
         nameEntry.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
         s1Label = tk.Label(self.widgetFrame, text="Spectrum 1:")
         s1Label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
         
-        s1Combobox = ttk.Combobox(frame, values=list(self.master.controller.spectra.keys()), state='readonly', textvariable=self.s1Var)
+        s1Combobox = ttk.Combobox(self.widgetFrame, values=list(self.master.controller.spectra.keys()), state='readonly', textvariable=self.s1Var)
         s1Combobox.grid(row=1, column=1, padx=10, pady=10,sticky='w')
 
         opLabel = tk.Label(self.widgetFrame, text="Operation:")
@@ -964,7 +976,7 @@ class ArithmeticPopup(ConditionalPopup):
 
     def activateAuxiliaryField(self, *args):
         self.s2Combobox.configure(state='disabled')
-        if len(list(param for param in inspect.signature(getattr(self.functionClass, self.opVar.get())).parameters if param != 'self')) > 1:
+        if len(list(param for param in inspect.signature(getattr(self.functionClass, self.opVar.get())).parameters if param != 'self')) > 1: #if the operation takes more than one argument
             self.s2Var = tk.StringVar()
             self.s2Var.trace('w', self.activateOK)
             self.s2Combobox.configure(state='readonly', textvariable=self.s2Var)
@@ -981,6 +993,9 @@ class ArithmeticPopup(ConditionalPopup):
 
         except BadAxisSymmetryException as inst:
             self.alertBox.configure(text=inst.message)
+
+        except KeyError:
+            self.alertBox.configure(text="Operation requires two operands.")
 
 #======================================================================================================================================================        
 class GrindingCurvePopup(ConditionalPopup):
@@ -1088,39 +1103,59 @@ class ZeroSpectrumPopup(ConditionalPopup):
 class NewPlotPopup(ConditionalPopup):
     #popup that enables creation of a new plot
     def __init__(self, master):
-        super().__init__(master, "Make new plot", plotNameVar=tk.StringVar())
+        super().__init__(master, "Make new plot", plotVar=tk.StringVar(),
+                                                    numOfPlotsVar=tk.StringVar())
 
+    def activateOK(self, *args):
+        self.okButton.configure(state='disabled')
+        if self.plotVar.get():
+            self.okButton.configure(state='normal')
+    
     def makeWidgets(self):
         plotLabel = tk.Label(self.widgetFrame, text="Name the new plot:")
         plotLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
         
-        plotEntry = ttk.Entry(self.widgetFrame, textvariable=self.plotNameVar)
+        plotEntry = ttk.Entry(self.widgetFrame, textvariable=self.plotVar)
         plotEntry.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
+        subplotLabel = tk.Label(self.widgetFrame, text="Number of Subplots:")
+        subplotLabel.grid(row=1, column=0, padx=10, pady=10, sticky='e')
+
+        subplotEntry = ttk.Entry(self.widgetFrame, textvariable=self.numOfPlotsVar)
+        subplotEntry.grid(row=1, column=1, padx=10, pady=10, sticky='w')
+        
         super().makeWidgets()
 
     def okPressed(self, *args):
-        self.master.controller.make_plot(self.plotNameVar.get())
-        self.master.showFigure(self.master.controller.plots[self.plotNameVar.get()])
+        try:
+            self.master.controller.make_plot(self.plotVar.get(), int(self.numOfPlotsVar.get()))
+            
+        except ValueError:
+            self.master.controller.make_plot(self.plotVar.get())
+            self.master.alertBox.configure(text="One subplot was created.")
+
+        finally:
+            self.master.showFigure(self.master.controller.plots[self.plotVar.get()])
+
         super().okPressed()
 
 #======================================================================================================================================================
 class DeletePlotPopup(GraphPopup):
     #popup that enables deletion of an existing plot
     def __init__(self, master):
-        super().__init__(master, "Delete Plot", plotNameVar=tk.StringVar())
+        super().__init__(master, "Delete Plot", plotVar=tk.StringVar())
 
     def makeWidgets(self):
         plotLabel = tk.Label(self.widgetFrame, text="Plot to delete")
         plotLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
         
-        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotNameVar)
+        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotVar)
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
         
         super().makeWidgets()
 
     def okPressed(self, *args):
-        self.master.controller.delete_plot(self.plotNameVar.get())
+        self.master.controller.delete_plot(self.plotVar.get())
         self.master.canvas.get_tk_widget().delete('all')
 
         if len(self.master.controller.plots) >=1:
@@ -1131,19 +1166,19 @@ class DeletePlotPopup(GraphPopup):
 class ShowPlotPopup(GraphPopup):
     #popup that allows the user to toggle display of a plot
     def __init__(self, master):
-        super().__init__(master, "Show plot", plotNameVar = tk.StringVar())
+        super().__init__(master, "Show plot", plotVar = tk.StringVar())
 
     def makeWidgets(self):
         nameLabel = tk.Label(self.widgetFrame, text="Show plot:")
         nameLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
         
-        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotNameVar)        
+        plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotVar)        
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
         super().makeWidgets()
 
     def okPressed(self, *args):
-        self.master.showFigure(self.master.controller.plots[self.plotNameVar.get()])
+        self.master.showFigure(self.master.controller.plots[self.plotVar.get()])
         super().okPressed()
 
 #==============================================================================================================================================
@@ -1151,6 +1186,7 @@ class ModifyPlotPopup(GraphPopup):
     #popup that allows the user to modify the appearance of a plot
     def __init__(self, master):
         super().__init__(master, "Modify Plot", plotVar=tk.StringVar(),
+                                                 axisVar=tk.StringVar(),
                                                  titleVar=tk.StringVar(),
                                                  xVar=tk.StringVar(),
                                                  yVar=tk.StringVar(),
@@ -1159,12 +1195,23 @@ class ModifyPlotPopup(GraphPopup):
                                                  lylimVar=tk.StringVar(),
                                                  rylimVar=tk.StringVar(),
                                                  legendVar=tk.BooleanVar())
+        self.legendVar.set(True)
 
+    def traceVars(self):
+        self.plotVar.trace('w', self.activateAxisField)
+        self.axisVar.trace('w', self.activateOK)
+        
+    
     def makeWidgets(self):
         plotLabel = tk.Label(self.widgetFrame, text="Plot:")
         plotLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
         plotCombobox = ttk.Combobox(self.widgetFrame, state='readonly', values=list(self.master.controller.plots.keys()), textvariable=self.plotVar)
         plotCombobox.grid(row=0, column=1, padx=10, pady=10, sticky='w')
+
+        axisLabel = tk.Label(self.widgetFrame, text="Axis:")
+        axisLabel.grid(row=1, column=0, padx=10, pady=10, sticky='e')
+        self.axisCombobox = ttk.Combobox(self.widgetFrame, state='disabled', textvariable=self.axisVar)
+        self.axisCombobox.grid(row=1, column=1, padx=10, pady=10, sticky='w')
         
         titleLabel = tk.Label(self.widgetFrame, text="Rename:")
         titleLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
@@ -1192,50 +1239,71 @@ class ModifyPlotPopup(GraphPopup):
         xlimLabel = tk.Label(limitsContainer, text="x Limits")
         xlimLabel.grid(row=0, column=0, pady=5, sticky='w')
         
-        lxlimEntry = ttk.Entry(limitsContainer, textvariable=self.lxlimVar)
-        lxlimEntry.grid(row=1, column=0, padx=5, sticky='e')
+        self.lxlimEntry = ttk.Entry(limitsContainer, textvariable=self.lxlimVar)
+        self.lxlimEntry.grid(row=1, column=0, padx=5, sticky='e')
         
-        rxlimEntry = ttk.Entry(limitsContainer, textvariable=self.rxlimVar)
-        rxlimEntry.grid(row=1, column=1, padx=5, sticky='w')
+        self.rxlimEntry = ttk.Entry(limitsContainer, textvariable=self.rxlimVar)
+        self.rxlimEntry.grid(row=1, column=1, padx=5, sticky='w')
 
         ylimLabel = tk.Label(limitsContainer, text="y Limits")
         ylimLabel.grid(row=0, column=2, pady=5, sticky='w')
         
-        lylimEntry = ttk.Entry(limitsContainer, textvariable=self.lylimVar)
-        lylimEntry.grid(row=1, column=2, padx=5, sticky='e')
+        self.lylimEntry = ttk.Entry(limitsContainer, textvariable=self.lylimVar)
+        self.lylimEntry.grid(row=1, column=2, padx=5, sticky='e')
 
-        rylimEntry = ttk.Entry(limitsContainer, textvariable=self.rylimVar)
-        rylimEntry.grid(row=1, column=3, padx=5, sticky='w')
+        self.rylimEntry = ttk.Entry(limitsContainer, textvariable=self.rylimVar)
+        self.rylimEntry.grid(row=1, column=3, padx=5, sticky='w')
         
         super().makeWidgets()
 
-    def activateOK(self, *args):
+    def activateAxisField(self, *args):
+        self.axisCombobox.configure(state='disabled')
         if self.plotVar.get():
+            self.axisCombobox.configure(state='readonly', values=[i for i in range(len(self.master.controller.plots[self.plotVar.get()].axes))] + ["all"])
+        
+    def activateOK(self, *args):
+        self.okButton.configure(state='disabled')
+        if self.axisVar.get():
             self.okButton.configure(state='normal')
-        else:
-            self.okButton.configure(state='disabled')
+            
 
     def okPressed(self, *args):
+        try:
+            self.applyChanges()
+
+        except ValueError:
+            for i in range(len(self.master.controller.plots[self.plotVar.get()].axes)):
+                self.axisVar.set(i)
+                self.applyChanges()
+                
+        finally:
+            if self.titleVar.get():
+                self.master.controller.plots[self.plotVar.get()].suptitle(self.titleVar.get())
+                self.master.controller.rename_plot(self.plotVar.get(), self.titleVar.get())
+
+            super().okPressed()
+
+    def applyChanges(self):
+        axeskw = {}
         if self.xVar.get():
-            self.master.controller.plots[self.plotVar.get()].axes[0].set_xlabel(self.xVar.get())
+            axeskw['xlabel'] = self.xVar.get()
+
         if self.yVar.get():
-            self.master.controller.plots[self.plotVar.get()].axes[0].set_ylabel(self.yVar.get())            
-        if self.legendVar.get():
-            self.master.controller.plots[self.plotVar.get()].axes[0].legend()
-        if not self.legendVar.get():
-            self.master.controller.plots[self.plotVar.get()].axes[0].legend().remove()
+            axeskw['ylabel'] = self.yVar.get()
 
-        if all(var.get().isnumeric() for var in {self.lxlimVar, self.rxlimVar}):
-            self.master.controller.plots[self.plotVar.get()].axes[0].set_xlim(float(self.lxlimEntry.get()), float(self.rxlimEntry.get()))
+        if all(var.get().isnumeric() for var in (self.lxlimVar, self.rxlimVar)):
+            axeskw['xlim'] = (float(self.lxlimVar.get()), float(self.rxlimVar.get()))
+            
+        if all(var.get().isnumeric() for var in (self.lylimVar, self.rylimVar)):
+            axeskw['ylim'] = (float(self.lylimVar.get()), float(self.rylimVar.get()))
 
-        if all(var.get().isnumeric() for var in {self.lylimVar, self.rylimVar}):
-            self.master.controller.plots[self.plotVar.get()].axes[0].set_ylim(float(self.lylimEntry.get()), float(self.rylimEntry.get()))
+        self.master.controller.plots[self.plotVar.get()].axes[int(self.axisVar.get())].set(**axeskw)
+          
+        self.master.controller.plots[self.plotVar.get()].axes[int(self.axisVar.get())].legend().set_draggable(True)
 
-        if self.titleVar.get():
-            self.master.controller.plots[self.plotVar.get()].suptitle(self.titleVar.get())
-            self.master.controller.rename_plot(self.plotVar.get(), self.titleVar.get())
+        if not self.legendVar.get() and self.master.controller.plots[self.plotVar.get()].axes[self.axisVar.get()]:
+            self.master.controller.plots[self.plotVar.get()].axes[int(self.axisVar.get())].legend().remove()
 
-        super().okPressed()
 #==============================================================================================================================================
 class UnsupportedFileTypeException(Exception):
     def __init__(self, path):
