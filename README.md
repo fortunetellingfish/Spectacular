@@ -63,7 +63,7 @@
 
          + __Modify Trace:__ Creates a popup to change the line width or the colour of a trace. Only one of these fields needs to be filled in order to activate the "OK" button. However, the "Plot" and "Trace" fields *must* be filled.
 
-         + __New Plot:__ Creates a popup to make a new, single-axis plot. The new plot must be named.  
+         + __New Plot:__ Creates a popup to make a new plot, with any number of axes; though, more than 3 tends to make the figure look messy. The new plot must be named.  
 
          + __Delete Plot:__
          Creates a popup to delete an existing Figure object.
@@ -71,7 +71,7 @@
          + __Modify Plot:__ Creates a popup to change aspects of the plot itself, such as the title, the x and y limits, the x and y limits, and to toggle the legend.
 
          + __Show Plot:__ Creates a popup to select which plot is displayed on the graph page.
-
+ 
          + __Update Legend:__ Refreshes the legend on the current plot. This button is necessary due to a known [bug][] in matplotlib, where the legend representtion of the lines on an axis do not change with the lines themselves.
          
          [bug]: https://github.com/matplotlib/matplotlib/issues/2035  
