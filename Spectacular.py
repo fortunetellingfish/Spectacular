@@ -28,7 +28,7 @@ pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', None)
 
 SOFTWARE_NAME = "Spectacular"
-VERSION_NUMBER = "v.0.7.2"
+VERSION_NUMBER = "v.1.0.0"
 
 #=================================================================================================================================================
 class Minerals(Enum):
@@ -63,7 +63,7 @@ class App(tk.Tk): ###The controller of all pages, & control of operations
             self.frames[F] = frame
 
             self.wm_title(SOFTWARE_NAME + " " + VERSION_NUMBER)
-            self.iconphoto(True, tk.PhotoImage(file='icon.png'))
+            self.iconbitmap('icon.ico')
             
             frame.grid(row=0, column=0, sticky="nsew")
 
@@ -107,14 +107,10 @@ class App(tk.Tk): ###The controller of all pages, & control of operations
         return spectrum
 
     def make_plot(self, name, numOfSubplots=1):
-        fig = Figure(figsize=(8.5, 5.5), dpi=100)
-        fig.set_tight_layout(True)
+        fig = Figure(figsize=(8.5, 5.5), dpi=100, tight_layout=True)
         fig.suptitle(name)
-
-        gs = GridSpec(nrows=numOfSubplots, ncols=1)
-        for i in range(numOfSubplots):
-            subplotspec = gs.new_subplotspec((i,0))
-            axis = fig.add_subplot(subplotspec)
+        axes = fig.subplots(numOfSubplots, 1)
+        fig.set_tight_layout({"rect":(0, 0.03, 1, 0.95)})
 
         self.plots[name] = fig
 
