@@ -31,7 +31,7 @@
         + #### Roadmap ####
           More file type compatibility.
 
-    + ### Tutorial Page  (**in development**) ###
+    + ### Tutorial Page ##
         &nbsp; A page, similar to this README, intended to outline the usage specifications of the application only. There are several external html files in this directory which are loaded in when needed. The `Tutorial Page` has a `pages` list attribute of two-tuples, each containing a `str` page title and a function call to open and read the html file for that page. The `tk_html_widgets` module's `HTMLScrolledText` widget is used to render and display the HTML. There are buttons below the text widget, which navigate the tutorial pages in a "previous/next" fashion, according to their order in the `pages` list. Either button will become disabled when the extremum of its navigation direction is reached. Note, here, that negative indexing is not supported. The `TutorialPage`'s state also holds an integer `currentPage` attribute, since using an iterator would make backward navigation much more difficult.
 
     + ### Make Spectrum Page ###
@@ -57,25 +57,20 @@
     + ### Graph Page ###
         This is the page where the user can plot Spectrum objects and customise plots. One plot is displayed at a time, in the centre of the page. From the tray on the right, one can modify her plots.
 
-         + __Add Trace:__ Creates a popup to add a line to the axis, with the df of a Spectrum object as the source. The trace must also be initialised with linewidth and colour parameters, which can be modified later.
+         + __Add Trace:__ Creates a popup to add a line to the specified axis, with the df of a Spectrum object as the source. The trace must also be initialised with linewidth and colour parameters, which can be modified later.
 
-         + __Delete Trace:__ Creates a popup to remove an existing trace from a plot.
+         + __Delete Trace:__ Creates a popup to remove an existing trace from an axis on the plot.
 
          + __Modify Trace:__ Creates a popup to change the line width or the colour of a trace. Only one of these fields needs to be filled in order to activate the "OK" button. However, the "Plot" and "Trace" fields *must* be filled.
 
          + __New Plot:__ Creates a popup to make a new plot, with any number of axes; though, more than 3 tends to make the figure look messy. The new plot must be named.  
 
-         + __Delete Plot:__
-         Creates a popup to delete an existing Figure object.
+         + __Delete Plot:__ Creates a popup to delete an existing Figure object.
 
-         + __Modify Plot:__ Creates a popup to change aspects of the plot itself, such as the title, the x and y limits, the x and y limits, and to toggle the legend.
+         + __Modify Plot:__ Creates a popup to change aspects of the plot and axes, such as the title, the x and y limits, the x and y limits, and to toggle the legend.
 
          + __Show Plot:__ Creates a popup to select which plot is displayed on the graph page.
  
-         + __Update Legend:__ Refreshes the legend on the current plot. This button is necessary due to a known [bug][] in matplotlib, where the legend representtion of the lines on an axis do not change with the lines themselves.
+         + __Update Legend:__ Refreshes the legends on the current plot. This button is necessary due to a known [bug][] in matplotlib, where the legend representtion of the lines on an axis do not change with the lines themselves.
          
-         [bug]: https://github.com/matplotlib/matplotlib/issues/2035  
-          
-        &nbsp;
-         + #### Roadmap ####
-           Allow for multiple axes on the same plot.
+         [bug]: https://github.com/matplotlib/matplotlib/issues/2035
