@@ -1,6 +1,6 @@
 # **Spectacular** #
 
-## v.0.6.1 ##
+## v.1.0.0 ##
 
  &nbsp; A desktop app for viewing and manipulating FTIR Spectra developed for the Poduska Research Group, Memorial University.
 
